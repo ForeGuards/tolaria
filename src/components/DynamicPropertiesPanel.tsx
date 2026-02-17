@@ -199,7 +199,6 @@ export function DynamicPropertiesPanel({
 
   return (
     <div>
-      <h4 className="font-mono-overline mb-2 text-muted-foreground">Properties</h4>
       <div className="flex flex-col gap-2">
         {entry.isA && (
           <div className="flex items-center justify-between">

@@ -233,7 +233,6 @@ function EmptyInspector() {
   return (
     <>
       <div>
-        <h4 className="font-mono-overline mb-2 text-muted-foreground">Properties</h4>
         <p className="m-0 text-[13px] text-muted-foreground">No note selected</p>
       </div>
       <div>
