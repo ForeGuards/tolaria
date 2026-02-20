@@ -10,15 +10,9 @@ import { AIChatPanel } from './AIChatPanel'
 import { DiffView } from './DiffView'
 import { ResizeHandle } from './ResizeHandle'
 import { TabBar } from './TabBar'
+import { BreadcrumbBar } from './BreadcrumbBar'
 import { useEditorTheme } from '../hooks/useTheme'
 import { cn } from '@/lib/utils'
-import {
-  MagnifyingGlass,
-  GitBranch,
-  CursorText,
-  Sparkle,
-  DotsThree,
-} from '@phosphor-icons/react'
 import { splitFrontmatter, preProcessWikilinks, injectWikilinks, countWords } from '../utils/wikilinks'
 import './Editor.css'
 import './EditorTheme.css'
@@ -313,90 +307,17 @@ export const Editor = memo(function Editor({
   )
 
   const breadcrumbBar = activeTab ? (
-    <div
-      className="flex shrink-0 items-center justify-between"
-      style={{
-        height: 45,
-        background: 'var(--background)',
-        borderBottom: '1px solid var(--border)',
-        padding: '6px 16px',
-      }}
-    >
-      {/* Left: breadcrumb */}
-      <div className="flex items-center gap-1" style={{ fontSize: 12 }}>
-        <span className="text-muted-foreground">{activeTab.entry.isA || 'Note'}</span>
-        <span className="text-muted-foreground" style={{ margin: '0 2px' }}>&rsaquo;</span>
-        <span className="font-medium text-foreground">{activeTab.entry.title}</span>
-        <span className="text-muted-foreground" style={{ margin: '0 4px' }}>&middot;</span>
-        <span className="text-muted-foreground">{wordCount.toLocaleString()} words</span>
-        {activeModified && (
-          <>
-            <span className="text-muted-foreground" style={{ margin: '0 4px' }}>&middot;</span>
-            <span className="font-semibold" style={{ color: 'var(--accent-yellow)' }}>M</span>
-          </>
-        )}
-      </div>
-
-      {/* Right: action icons */}
-      <div className="flex items-center" style={{ gap: 12 }}>
-        <button
-          className="flex items-center justify-center border-none bg-transparent p-0 text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
-          title="Search in file"
-        >
-          <MagnifyingGlass size={16} />
-        </button>
-        {showDiffToggle && (
-          <button
-            className={cn(
-              "flex items-center justify-center border-none bg-transparent p-0 cursor-pointer transition-colors",
-              diffMode ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-            onClick={handleToggleDiff}
-            disabled={diffLoading}
-            title={diffLoading ? 'Loading diff...' : diffMode ? 'Back to editor' : 'Show diff'}
-          >
-            <GitBranch size={16} />
-          </button>
-        )}
-        {!showDiffToggle && (
-          <button
-            className="flex items-center justify-center border-none bg-transparent p-0 text-muted-foreground"
-            style={disabledIconStyle}
-            title="No changes"
-            tabIndex={-1}
-          >
-            <GitBranch size={16} />
-          </button>
-        )}
-        <button
-          className="flex items-center justify-center border-none bg-transparent p-0 text-muted-foreground"
-          style={disabledIconStyle}
-          title="Coming soon"
-          tabIndex={-1}
-        >
-          <CursorText size={16} />
-        </button>
-        <button
-          className={cn(
-            "flex items-center justify-center border-none bg-transparent p-0 cursor-pointer transition-colors",
-            showAIChat ? "" : "text-muted-foreground hover:text-foreground"
-          )}
-          style={showAIChat ? { color: 'var(--primary)' } : undefined}
-          onClick={onToggleAIChat}
-          title={showAIChat ? 'Close AI Chat' : 'Open AI Chat'}
-        >
-          <Sparkle size={16} weight={showAIChat ? 'fill' : 'regular'} />
-        </button>
-        <button
-          className="flex items-center justify-center border-none bg-transparent p-0 text-muted-foreground"
-          style={disabledIconStyle}
-          title="Coming soon"
-          tabIndex={-1}
-        >
-          <DotsThree size={16} />
-        </button>
-      </div>
-    </div>
+    <BreadcrumbBar
+      entry={activeTab.entry}
+      wordCount={wordCount}
+      isModified={activeModified}
+      showDiffToggle={!!showDiffToggle}
+      diffMode={diffMode}
+      diffLoading={diffLoading}
+      onToggleDiff={handleToggleDiff}
+      showAIChat={showAIChat}
+      onToggleAIChat={onToggleAIChat}
+    />
   ) : null
 
   const rightPanel = showAIChat ? (
