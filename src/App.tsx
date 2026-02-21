@@ -3,7 +3,7 @@ import { Sidebar } from './components/Sidebar'
 import { NoteList } from './components/NoteList'
 import { Editor } from './components/Editor'
 import { ResizeHandle } from './components/ResizeHandle'
-import { CreateNoteDialog } from './components/CreateNoteDialog'
+import { CreateNoteDialog, type NoteType } from './components/CreateNoteDialog'
 import { QuickOpenPalette } from './components/QuickOpenPalette'
 import { Toast } from './components/Toast'
 import { CommitDialog } from './components/CommitDialog'
@@ -37,6 +37,7 @@ function App() {
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false)
   const [gitHistory, setGitHistory] = useState<GitCommit[]>([])
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [createNoteDefaultType, setCreateNoteDefaultType] = useState<NoteType | undefined>()
   const [showQuickOpen, setShowQuickOpen] = useState(false)
   const [showCommitDialog, setShowCommitDialog] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -63,9 +64,14 @@ function App() {
     vault.loadGitHistory(notes.activeTabPath).then(setGitHistory)
   }, [notes.activeTabPath, vault.loadGitHistory])
 
+  const openCreateDialog = useCallback((type?: string) => {
+    setCreateNoteDefaultType(type as NoteType | undefined)
+    setShowCreateDialog(true)
+  }, [])
+
   useAppKeyboard({
     onQuickOpen: () => setShowQuickOpen(true),
-    onCreateNote: () => setShowCreateDialog(true),
+    onCreateNote: openCreateDialog,
     onSave: () => setToastMessage('Saved'),
     activeTabPathRef: notes.activeTabPathRef,
     handleCloseTabRef: notes.handleCloseTabRef,
@@ -101,11 +107,11 @@ function App() {
     <div className="app-shell">
       <div className="app">
         <div className="app__sidebar" style={{ width: sidebarWidth }}>
-          <Sidebar entries={vault.entries} selection={selection} onSelect={setSelection} onSelectNote={notes.handleSelectNote} modifiedCount={vault.modifiedFiles.length} onCommitPush={() => setShowCommitDialog(true)} />
+          <Sidebar entries={vault.entries} selection={selection} onSelect={setSelection} onSelectNote={notes.handleSelectNote} onCreateType={openCreateDialog} modifiedCount={vault.modifiedFiles.length} onCommitPush={() => setShowCommitDialog(true)} />
         </div>
         <ResizeHandle onResize={handleSidebarResize} />
         <div className="app__note-list" style={{ width: noteListWidth }}>
-          <NoteList entries={vault.entries} selection={selection} selectedNote={activeTab?.entry ?? null} allContent={vault.allContent} modifiedFiles={vault.modifiedFiles} onSelectNote={notes.handleSelectNote} onCreateNote={() => setShowCreateDialog(true)} />
+          <NoteList entries={vault.entries} selection={selection} selectedNote={activeTab?.entry ?? null} allContent={vault.allContent} modifiedFiles={vault.modifiedFiles} onSelectNote={notes.handleSelectNote} onCreateNote={openCreateDialog} />
         </div>
         <ResizeHandle onResize={handleNoteListResize} />
         <div className="app__editor">
@@ -118,7 +124,7 @@ function App() {
             onNavigateWikilink={notes.handleNavigateWikilink}
             onLoadDiff={vault.loadDiff}
             isModified={vault.isFileModified}
-            onCreateNote={() => setShowCreateDialog(true)}
+            onCreateNote={openCreateDialog}
             inspectorCollapsed={inspectorCollapsed}
             onToggleInspector={() => setInspectorCollapsed((c) => !c)}
             inspectorWidth={inspectorWidth}
@@ -147,6 +153,7 @@ function App() {
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
         onCreate={notes.handleCreateNote}
+        defaultType={createNoteDefaultType}
       />
       <CommitDialog
         open={showCommitDialog}

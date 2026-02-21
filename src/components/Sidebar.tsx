@@ -1,7 +1,7 @@
 import { useState, memo, type ComponentType } from 'react'
 import type { VaultEntry, SidebarSelection } from '../types'
 import { cn } from '@/lib/utils'
-import { ChevronRight, ChevronDown, GitCommitHorizontal } from 'lucide-react'
+import { ChevronRight, ChevronDown, GitCommitHorizontal, Plus } from 'lucide-react'
 import { getTypeColor, getTypeLightColor } from '../utils/typeColors'
 import {
   FileText,
@@ -24,6 +24,7 @@ interface SidebarProps {
   selection: SidebarSelection
   onSelect: (selection: SidebarSelection) => void
   onSelectNote?: (entry: VaultEntry) => void
+  onCreateType?: (type: string) => void
   modifiedCount?: number
   onCommitPush?: () => void
 }
@@ -44,7 +45,7 @@ const SECTION_GROUPS: { label: string; type: string; Icon: ComponentType<IconPro
   { label: 'Types', type: 'Type', Icon: StackSimple },
 ]
 
-export const Sidebar = memo(function Sidebar({ entries, selection, onSelect, onSelectNote, modifiedCount = 0, onCommitPush }: SidebarProps) {
+export const Sidebar = memo(function Sidebar({ entries, selection, onSelect, onSelectNote, onCreateType, modifiedCount = 0, onCommitPush }: SidebarProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const toggleSection = (type: string) => {
     setCollapsed((prev) => ({ ...prev, [type]: !prev[type] }))
@@ -128,7 +129,7 @@ export const Sidebar = memo(function Sidebar({ entries, selection, onSelect, onS
               {/* Section header row */}
               <div
                 className={cn(
-                  "flex cursor-pointer select-none items-center justify-between rounded transition-colors",
+                  "group/section flex cursor-pointer select-none items-center justify-between rounded transition-colors",
                   isActive({ kind: 'sectionGroup', type })
                     ? "bg-secondary"
                     : "hover:bg-accent"
@@ -140,16 +141,32 @@ export const Sidebar = memo(function Sidebar({ entries, selection, onSelect, onS
                   <Icon size={16} style={{ color: getTypeColor(type) }} />
                   <span className="text-[13px] font-medium text-foreground">{label}</span>
                 </div>
-                <button
-                  className="flex shrink-0 items-center border-none bg-transparent p-0 text-inherit cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleSection(type)
-                  }}
-                  aria-label={isCollapsed ? `Expand ${label}` : `Collapse ${label}`}
-                >
-                  {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
-                </button>
+                <div className="flex items-center" style={{ gap: 2 }}>
+                  {onCreateType && (
+                    <button
+                      className="flex shrink-0 items-center justify-center rounded border-none bg-transparent p-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover/section:opacity-100 cursor-pointer"
+                      style={{ width: 20, height: 20 }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onCreateType(type)
+                      }}
+                      aria-label={`Create new ${type}`}
+                      title={`New ${type}`}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  )}
+                  <button
+                    className="flex shrink-0 items-center border-none bg-transparent p-0 text-inherit cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleSection(type)
+                    }}
+                    aria-label={isCollapsed ? `Expand ${label}` : `Collapse ${label}`}
+                  >
+                    {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+                  </button>
+                </div>
               </div>
 
               {/* Children items */}

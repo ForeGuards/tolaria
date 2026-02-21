@@ -21,9 +21,10 @@ interface CreateNoteDialogProps {
   open: boolean
   onClose: () => void
   onCreate: (title: string, type: NoteType) => void
+  defaultType?: NoteType
 }
 
-export function CreateNoteDialog({ open, onClose, onCreate }: CreateNoteDialogProps) {
+export function CreateNoteDialog({ open, onClose, onCreate, defaultType }: CreateNoteDialogProps) {
   const [title, setTitle] = useState('')
   const [type, setType] = useState<NoteType>('Note')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -31,10 +32,10 @@ export function CreateNoteDialog({ open, onClose, onCreate }: CreateNoteDialogPr
   useEffect(() => {
     if (open) {
       setTitle('')
-      setType('Note')
+      setType(defaultType ?? 'Note')
       setTimeout(() => inputRef.current?.focus(), 50)
     }
-  }, [open])
+  }, [open, defaultType])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

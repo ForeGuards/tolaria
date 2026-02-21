@@ -235,6 +235,25 @@ describe('Sidebar', () => {
     })
   })
 
+  it('renders + buttons for each section group when onCreateType is provided', () => {
+    const onCreateType = vi.fn()
+    render(<Sidebar entries={mockEntries} selection={defaultSelection} onSelect={() => {}} onCreateType={onCreateType} />)
+    const createButtons = screen.getAllByTitle(/^New /)
+    expect(createButtons.length).toBe(7) // Projects, Experiments, Responsibilities, Procedures, People, Events, Topics
+  })
+
+  it('calls onCreateType with correct type when + button is clicked', () => {
+    const onCreateType = vi.fn()
+    render(<Sidebar entries={mockEntries} selection={defaultSelection} onSelect={() => {}} onCreateType={onCreateType} />)
+    fireEvent.click(screen.getByTitle('New Project'))
+    expect(onCreateType).toHaveBeenCalledWith('Project')
+  })
+
+  it('does not render + buttons when onCreateType is not provided', () => {
+    render(<Sidebar entries={mockEntries} selection={defaultSelection} onSelect={() => {}} />)
+    expect(screen.queryByTitle('New Project')).not.toBeInTheDocument()
+  })
+
   it('renders commit button even when no modified files', () => {
     render(<Sidebar entries={[]} selection={defaultSelection} onSelect={() => {}} onCommitPush={() => {}} />)
     expect(screen.getByText('Commit & Push')).toBeInTheDocument()

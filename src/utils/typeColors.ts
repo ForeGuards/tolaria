@@ -29,11 +29,11 @@ const DEFAULT_COLOR = 'var(--accent-blue)'
 const DEFAULT_LIGHT_COLOR = 'var(--accent-blue-light)'
 
 /** Returns the CSS variable for the accent color of a given note type */
-export function getTypeColor(isA: string): string {
-  return TYPE_COLOR_MAP[isA] ?? DEFAULT_COLOR
+export function getTypeColor(isA: string | null): string {
+  return (isA && TYPE_COLOR_MAP[isA]) ?? DEFAULT_COLOR
 }
 
 /** Returns the CSS variable for the light/background variant of a given note type's color */
-export function getTypeLightColor(isA: string): string {
-  return TYPE_LIGHT_COLOR_MAP[isA] ?? DEFAULT_LIGHT_COLOR
+export function getTypeLightColor(isA: string | null): string {
+  return (isA && TYPE_LIGHT_COLOR_MAP[isA]) ?? DEFAULT_LIGHT_COLOR
 }
