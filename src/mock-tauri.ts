@@ -4,7 +4,7 @@
  * this provides realistic test data so the UI can be verified visually.
  */
 
-import type { VaultEntry, GitCommit, ModifiedFile, Settings, GithubRepo } from './types'
+import type { VaultEntry, GitCommit, ModifiedFile, Settings } from './types'
 
 // --- Vault API detection (for reading real files in browser dev mode) ---
 let vaultApiAvailable: boolean | null = null
