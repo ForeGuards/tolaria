@@ -265,7 +265,7 @@ function NoteListInner({ entries, selection, selectedNote, allContent, modifiedF
   const listConfig = sortPrefs['__list__'] ?? { option: 'modified' as SortOption, direction: 'desc' as SortDirection }
   const listSort = listConfig.option
   const listDirection = listConfig.direction
-  const { isEntityView, isTrashView, typeDocument, searched, searchedGroups, expiredTrashCount } = useNoteListData({ entries, selection, allContent, query, listSort, listDirection, modifiedFiles })
+  const { isEntityView, isTrashView, typeDocument, searched, searchedGroups, expiredTrashCount } = useNoteListData({ entries, selection, allContent, query, listSort, listDirection })
 
   const handleClickNote = useCallback((entry: VaultEntry, e: React.MouseEvent) => {
     routeNoteClick(entry, e, onSelectNote, onReplaceActiveTab)
