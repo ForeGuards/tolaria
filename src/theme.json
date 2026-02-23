@@ -92,7 +92,7 @@
     "wikilink": {
       "color": "var(--accent-blue)",
       "textDecoration": "none",
-      "borderBottom": "1px dotted var(--accent-blue)",
+      "borderBottom": "1px dotted currentColor",
       "cursor": "pointer"
     }
   },
