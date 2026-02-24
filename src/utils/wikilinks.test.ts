@@ -163,6 +163,13 @@ describe('splitFrontmatter', () => {
     expect(fm).toBe('---\ntitle: Hello\n---\n')
     expect(body).toBe('Content')
   })
+
+  it('ignores dashes inside frontmatter values', () => {
+    const content = '---\ntitle: "A --- B"\ntype: Note\n---\n\nBody text'
+    const [fm, body] = splitFrontmatter(content)
+    expect(fm).toBe('---\ntitle: "A --- B"\ntype: Note\n---\n')
+    expect(body).toBe('\nBody text')
+  })
 })
 
 describe('countWords', () => {
@@ -194,6 +201,67 @@ describe('countWords', () => {
   it('handles content without frontmatter', () => {
     const content = 'Hello world this is four words plus three'
     expect(countWords(content)).toBe(8)
+  })
+
+  it('excludes long frontmatter with many keys from count', () => {
+    const content = [
+      '---',
+      'type: Note',
+      'workspace: personal',
+      'notion_id: 63aeb735-e6f4-4a32-b7b6-d34276a26dee',
+      'status: Active',
+      'owner: Luca Rossi',
+      'tags: [Tauri, React, TypeScript]',
+      'belongs_to:',
+      '  - "[[quarter/q1-2026]]"',
+      'related_to:',
+      '  - "[[topic/software-development]]"',
+      '---',
+      '',
+      '# My Note',
+      '',
+      'Only these five words count.',
+    ].join('\n')
+    // Body: "# My Note\n\nOnly these five words count."
+    // After stripping '#': " My Note\n\nOnly these five words count."
+    // Words: My, Note, Only, these, five, words, count. = 7
+    expect(countWords(content)).toBe(7)
+  })
+
+  it('ignores frontmatter values containing dashes', () => {
+    const content = [
+      '---',
+      'title: "Something --- More"',
+      'type: Note',
+      '---',
+      '',
+      'Body words here.',
+    ].join('\n')
+    expect(countWords(content)).toBe(3)
+  })
+
+  it('handles frontmatter with horizontal rule in body', () => {
+    const content = [
+      '---',
+      'type: Note',
+      '---',
+      '',
+      '# Title',
+      '',
+      'Before the rule.',
+      '',
+      '---',
+      '',
+      'After the rule.',
+    ].join('\n')
+    // Body includes: Title, Before, the, rule., After, the, rule.
+    // The --- horizontal rule is stripped by the markdown char filter
+    expect(countWords(content)).toBe(7)
+  })
+
+  it('returns 0 when content is only frontmatter with no trailing body', () => {
+    const content = '---\ntitle: Hello\nstatus: Active\ntags: [a, b, c]\n---'
+    expect(countWords(content)).toBe(0)
   })
 })
 

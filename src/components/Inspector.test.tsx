@@ -131,8 +131,8 @@ describe('Inspector', () => {
 
   it('computes word count from content minus frontmatter', () => {
     render(<Inspector {...defaultProps} entry={mockEntry} content={mockContent} />)
-    // "# Test Project" + "This is a test note with some words to count." = 13 words
-    expect(screen.getByText('13')).toBeInTheDocument()
+    // "Test Project" (# stripped) + "This is a test note with some words to count." = 12 words
+    expect(screen.getByText('12')).toBeInTheDocument()
   })
 
   it('shows "Add property" button as disabled placeholder', () => {
@@ -470,8 +470,11 @@ Status: Active
           allContent={{}}
         />
       )
-      // 2 entries reference via Belongs to
-      expect(screen.getByText('2')).toBeInTheDocument()
+      // 2 entries reference via Belongs to — badge appears in the Referenced by header
+      const allTwos = screen.getAllByText('2')
+      expect(allTwos.length).toBeGreaterThanOrEqual(1)
+      // At least one "2" is inside a badge (span with ml-1 class)
+      expect(allTwos.some(el => el.classList.contains('ml-1'))).toBe(true)
     })
 
     it('shows "No references" when no entries reference the current note', () => {

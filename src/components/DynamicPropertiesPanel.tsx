@@ -5,6 +5,7 @@ import type { ParsedFrontmatter } from '../utils/frontmatter'
 import { EditableValue, TagPillList } from './EditableValue'
 import { Button } from '@/components/ui/button'
 import { getTypeColor, getTypeLightColor } from '../utils/typeColors'
+import { countWords } from '../utils/wikilinks'
 
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
   Active: { bg: 'var(--accent-green-light)', color: 'var(--accent-green)' },
@@ -37,12 +38,6 @@ export function containsWikilinks(value: FrontmatterValue): boolean {
   return false
 }
 
-function countWords(content: string | null): number {
-  if (!content) return 0
-  const stripped = content.replace(/^---[\s\S]*?---\n?/, '')
-  const words = stripped.trim().split(/\s+/).filter((w) => w.length > 0)
-  return words.length
-}
 
 function formatDate(timestamp: number | null): string {
   if (!timestamp) return '\u2014'
@@ -238,7 +233,7 @@ export function DynamicPropertiesPanel({
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [showAddDialog, setShowAddDialog] = useState(false)
 
-  const wordCount = countWords(content)
+  const wordCount = countWords(content ?? '')
 
   const propertyEntries = useMemo(() => {
     return Object.entries(frontmatter)
