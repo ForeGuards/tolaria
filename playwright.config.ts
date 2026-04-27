@@ -1,5 +1,10 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from '@playwright/test'
 
+const repoRoot = path.dirname(fileURLToPath(import.meta.url))
+const mockVaultPath = process.env.VITE_INITIAL_MOCK_VAULT
+  ?? path.join(repoRoot, 'demo-vault-v2')
 const baseURL = process.env.BASE_URL || 'http://localhost:5201'
 const claudeCodeOnboardingStorageState = {
   cookies: [],
@@ -28,5 +33,6 @@ export default defineConfig({
     command: `pnpm dev --port ${process.env.BASE_URL?.match(/:(\d+)/)?.[1] || '5201'}`,
     url: baseURL,
     reuseExistingServer: true,
+    env: { VITE_INITIAL_MOCK_VAULT: mockVaultPath },
   },
 })

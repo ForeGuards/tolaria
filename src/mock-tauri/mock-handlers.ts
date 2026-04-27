@@ -117,20 +117,27 @@ let mockSettings: Settings = {
   note_width_mode: null,
 }
 
-const DEFAULT_MOCK_VAULT_PATH = '/Users/mock/demo-vault-v2'
-const DEFAULT_MOCK_VAULT = {
-  label: 'demo-vault-v2',
-  path: DEFAULT_MOCK_VAULT_PATH,
-}
+// Test runs (Playwright smoke / integration) preseed a mock vault by setting
+// VITE_INITIAL_MOCK_VAULT in the dev-server environment. In normal `pnpm dev`
+// the variable is unset, so the WelcomeScreen renders on first load.
+const INITIAL_MOCK_VAULT_PATH = (import.meta.env?.VITE_INITIAL_MOCK_VAULT ?? '').trim()
+const DEFAULT_MOCK_VAULT_PATH = INITIAL_MOCK_VAULT_PATH
 
-let mockLastVaultPath: string | null = DEFAULT_MOCK_VAULT_PATH
-const mockRemoteStateByVault: Record<string, boolean> = {
-  [DEFAULT_MOCK_VAULT_PATH]: true,
-}
+const initialMockVaults = INITIAL_MOCK_VAULT_PATH
+  ? [{
+      label: INITIAL_MOCK_VAULT_PATH.split('/').pop() || 'Mock Vault',
+      path: INITIAL_MOCK_VAULT_PATH,
+    }]
+  : []
+
+let mockLastVaultPath: string | null = INITIAL_MOCK_VAULT_PATH || null
+const mockRemoteStateByVault: Record<string, boolean> = INITIAL_MOCK_VAULT_PATH
+  ? { [INITIAL_MOCK_VAULT_PATH]: true }
+  : {}
 
 let mockVaultList: { vaults: Array<{ label: string; path: string }>; active_vault: string | null } = {
-  vaults: [DEFAULT_MOCK_VAULT],
-  active_vault: DEFAULT_MOCK_VAULT_PATH,
+  vaults: initialMockVaults,
+  active_vault: INITIAL_MOCK_VAULT_PATH || null,
 }
 
 let mockVaultAiGuidanceStatus = {
@@ -472,8 +479,9 @@ export const mockHandlers: Record<string, (args: any) => any> = {
   set_last_vault_path: (args: { path: string }) => { mockLastVaultPath = args.path; return null },
   get_default_vault_path: () => '/Users/mock/Documents/Getting Started',
   check_vault_exists: (args: { path: string }) => {
-    // In mock mode, the demo-vault-v2 path always "exists"
-    return args.path.includes('demo-vault-v2')
+    if (!args.path) return false
+    if (mockVaultList.vaults.some((v) => v.path === args.path)) return true
+    return Object.prototype.hasOwnProperty.call(mockRemoteStateByVault, args.path)
   },
   create_empty_vault: (args: { targetPath?: string; target_path?: string }) => {
     const targetPath = args.targetPath || args.target_path || '/Users/mock/Documents/My Vault'

@@ -11,14 +11,8 @@ export type { PersistedVaultList } from '../utils/vaultListStore'
 
 export const GETTING_STARTED_LABEL = 'Getting Started'
 
-declare const __DEMO_VAULT_PATH__: string | undefined
-
-/** Build-time demo vault path (dev only). In production Tauri builds this is
- *  undefined and the real path is resolved at runtime via get_default_vault_path. */
-const STATIC_DEFAULT_PATH = typeof __DEMO_VAULT_PATH__ !== 'undefined' ? __DEMO_VAULT_PATH__ : ''
-
 export const DEFAULT_VAULTS: VaultOption[] = [
-  { label: GETTING_STARTED_LABEL, path: STATIC_DEFAULT_PATH },
+  { label: GETTING_STARTED_LABEL, path: '' },
 ]
 
 interface UseVaultSwitcherOptions {
@@ -147,10 +141,6 @@ function serializePersistedVaultSnapshot(
 }
 
 async function resolveDefaultPath(): Promise<string> {
-  if (STATIC_DEFAULT_PATH) {
-    return STATIC_DEFAULT_PATH
-  }
-
   try {
     return await tauriCall<string>('get_default_vault_path', {})
   } catch {
@@ -475,14 +465,14 @@ function usePersistedVaultStorage(store: PersistedVaultStore) {
 }
 
 function usePersistedVaultState(onSwitchRef: MutableRefObject<() => void>): PersistedVaultState {
-  const [vaultPath, setVaultPath] = useState(STATIC_DEFAULT_PATH)
+  const [vaultPath, setVaultPath] = useState('')
   const [selectedVaultPath, setSelectedVaultPath] = useState<string | null>(null)
   const [extraVaults, setExtraVaults] = useState<VaultOption[]>([])
   const [hiddenDefaults, setHiddenDefaults] = useState<string[]>([])
   const [defaultAvailable, setDefaultAvailable] = useState(false)
   const lastPersistedSnapshotRef = useRef<string | null>(null)
   const [loaded, setLoaded] = useState(false)
-  const [defaultPath, setDefaultPath] = useState(STATIC_DEFAULT_PATH)
+  const [defaultPath, setDefaultPath] = useState('')
 
   const store: PersistedVaultStore = {
     defaultAvailable,

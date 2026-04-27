@@ -1,4 +1,10 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from '@playwright/test'
+
+const repoRoot = path.dirname(fileURLToPath(import.meta.url))
+const mockVaultPath = process.env.VITE_INITIAL_MOCK_VAULT
+  ?? path.join(repoRoot, 'demo-vault-v2')
 
 export default defineConfig({
   testDir: './tests/integration',
@@ -14,5 +20,6 @@ export default defineConfig({
     command: `pnpm dev --port ${process.env.BASE_URL?.match(/:(\d+)/)?.[1] || '5365'}`,
     url: process.env.BASE_URL || 'http://localhost:5365',
     reuseExistingServer: true,
+    env: { VITE_INITIAL_MOCK_VAULT: mockVaultPath },
   },
 })
