@@ -777,7 +777,7 @@ describe('App', () => {
     await waitFor(() => {
       expect(saveVaultList).toHaveBeenCalledWith({
         list: {
-          vaults: [{ label: 'Work Vault', path: selectedVaultPath }],
+          vaults: [{ label: 'Work Vault', path: selectedVaultPath, last_opened_at: null }],
           active_vault: selectedVaultPath,
           hidden_defaults: [],
         },

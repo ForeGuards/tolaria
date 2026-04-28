@@ -167,7 +167,7 @@ describe('useVaultSwitcher', () => {
     expect(result.current.vaultPath).toBe('/selected/vault')
     expect(result.current.selectedVaultPath).toBe('/selected/vault')
     expect(mockVaultListStore).toEqual({
-      vaults: [{ label: 'Selected Vault', path: '/selected/vault' }],
+      vaults: [{ label: 'Selected Vault', path: '/selected/vault', last_opened_at: null }],
       active_vault: '/selected/vault',
       hidden_defaults: [],
     })
@@ -253,12 +253,14 @@ describe('useVaultSwitcher', () => {
 
     const { result } = await renderLoadedVaultSwitcher()
 
-    expect(result.current.allVaults).toEqual([{ label: 'Work', path: '/work/vault', available: true }])
+    expect(result.current.allVaults).toEqual([
+      { label: 'Work', path: '/work/vault', available: true, lastOpenedAt: null },
+    ])
     expect(result.current.vaultPath).toBe('/work/vault')
 
     await waitFor(() => {
       expect(mockVaultListStore).toEqual({
-        vaults: [{ label: 'Work', path: '/work/vault' }],
+        vaults: [{ label: 'Work', path: '/work/vault', last_opened_at: null }],
         active_vault: '/work/vault',
         hidden_defaults: [],
       })

@@ -135,7 +135,10 @@ const mockRemoteStateByVault: Record<string, boolean> = INITIAL_MOCK_VAULT_PATH
   ? { [INITIAL_MOCK_VAULT_PATH]: true }
   : {}
 
-let mockVaultList: { vaults: Array<{ label: string; path: string }>; active_vault: string | null } = {
+let mockVaultList: {
+  vaults: Array<{ label: string; path: string; last_opened_at?: number | null }>
+  active_vault: string | null
+} = {
   vaults: initialMockVaults,
   active_vault: INITIAL_MOCK_VAULT_PATH || null,
 }
@@ -503,9 +506,22 @@ export const mockHandlers: Record<string, (args: any) => any> = {
   set_last_vault_path: (args: { path: string }) => { mockLastVaultPath = args.path; return null },
   get_default_vault_path: () => '/Users/mock/Documents/Getting Started',
   check_vault_exists: (args: { path: string }) => {
-    if (!args.path) return false
-    if (mockVaultList.vaults.some((v) => v.path === args.path)) return true
-    return Object.prototype.hasOwnProperty.call(mockRemoteStateByVault, args.path)
+    // In browser mock mode we cannot read the real filesystem to verify a
+    // path. The user explicitly picked or typed this path, so we trust them
+    // — a permissive check matches the spirit of dev mode and lets the
+    // "Open existing vault" flow succeed without first registering a vault.
+    return Boolean(args.path && args.path.length > 0)
+  },
+  touch_vault_last_opened: (args: { path: string }) => {
+    const now = Date.now()
+    const existing = mockVaultList.vaults.find((v) => v.path === args.path)
+    if (existing) {
+      existing.last_opened_at = now
+    } else if (args.path) {
+      const label = args.path.split('/').pop() || args.path
+      mockVaultList.vaults.push({ label, path: args.path, last_opened_at: now })
+    }
+    return null
   },
   create_empty_vault: (args: { targetPath?: string; target_path?: string }) => {
     const targetPath = args.targetPath || args.target_path || '/Users/mock/Documents/My Vault'

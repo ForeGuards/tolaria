@@ -138,7 +138,10 @@ describe('mockHandlers additional coverage', () => {
 
     const createdVaultPath = mockHandlers.create_empty_vault({ targetPath: '/tmp/created-vault' })
     expect(mockHandlers.check_vault_exists({ path: createdVaultPath })).toBe(true)
-    expect(mockHandlers.check_vault_exists({ path: '/tmp/random-vault' })).toBe(false)
+    // In browser mock mode, check_vault_exists is permissive: any non-empty
+    // path the user picks is trusted (we cannot reach the real filesystem).
+    expect(mockHandlers.check_vault_exists({ path: '/tmp/random-vault' })).toBe(true)
+    expect(mockHandlers.check_vault_exists({ path: '' })).toBe(false)
 
     expect(mockHandlers.get_vault_ai_guidance_status()).toEqual({
       agents_state: 'managed',

@@ -2,8 +2,14 @@ import { invoke } from '@tauri-apps/api/core'
 import { isTauri, mockInvoke } from '../mock-tauri'
 import type { VaultOption } from '../components/StatusBar'
 
+interface PersistedVaultEntry {
+  label: string
+  path: string
+  last_opened_at?: number | null
+}
+
 export interface PersistedVaultList {
-  vaults: Array<{ label: string; path: string }>
+  vaults: PersistedVaultEntry[]
   active_vault: string | null
   hidden_defaults: string[]
 }
@@ -12,12 +18,12 @@ function tauriCall<T>(command: string, args: Record<string, unknown>): Promise<T
   return isTauri() ? invoke<T>(command, args) : mockInvoke<T>(command, args)
 }
 
-async function checkAvailability(v: { label: string; path: string }): Promise<VaultOption> {
+async function checkAvailability(v: PersistedVaultEntry): Promise<VaultOption> {
   try {
     const exists = await tauriCall<boolean>('check_vault_exists', { path: v.path })
-    return { label: v.label, path: v.path, available: exists }
+    return { label: v.label, path: v.path, available: exists, lastOpenedAt: v.last_opened_at ?? null }
   } catch {
-    return { label: v.label, path: v.path, available: false }
+    return { label: v.label, path: v.path, available: false, lastOpenedAt: v.last_opened_at ?? null }
   }
 }
 
@@ -30,9 +36,13 @@ export async function loadVaultList(): Promise<{ vaults: VaultOption[]; activeVa
 
 export function saveVaultList(vaults: VaultOption[], activeVault: string | null, hiddenDefaults: string[] = []): Promise<void> {
   const list: PersistedVaultList = {
-    vaults: vaults.map(v => ({ label: v.label, path: v.path })),
+    vaults: vaults.map(v => ({ label: v.label, path: v.path, last_opened_at: v.lastOpenedAt ?? null })),
     active_vault: activeVault,
     hidden_defaults: hiddenDefaults,
   }
   return tauriCall('save_vault_list', { list })
+}
+
+export function touchVaultLastOpened(path: string): Promise<void> {
+  return tauriCall('touch_vault_last_opened', { path })
 }

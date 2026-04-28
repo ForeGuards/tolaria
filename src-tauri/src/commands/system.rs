@@ -353,6 +353,11 @@ pub fn save_vault_list(list: VaultList) -> Result<(), String> {
     vault_list::save_vault_list(&list)
 }
 
+#[tauri::command]
+pub fn touch_vault_last_opened(path: String) -> Result<(), String> {
+    vault_list::touch_vault_last_opened(&path)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

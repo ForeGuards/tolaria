@@ -121,6 +121,7 @@ mod tests {
             vaults: vec![VaultListEntry {
                 label: "Test".to_string(),
                 path: vault_root.to_string_lossy().into_owned(),
+                last_opened_at: None,
             }],
             active_vault: None,
             hidden_defaults: vec![],
@@ -149,10 +150,12 @@ mod tests {
                 VaultListEntry {
                     label: "Parent".to_string(),
                     path: parent_root.to_string_lossy().into_owned(),
+                    last_opened_at: None,
                 },
                 VaultListEntry {
                     label: "Nested".to_string(),
                     path: nested_root.to_string_lossy().into_owned(),
+                    last_opened_at: None,
                 },
             ],
             active_vault: None,

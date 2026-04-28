@@ -210,4 +210,61 @@ describe('WelcomeScreen', () => {
       expect(screenContainer.querySelector('[data-no-drag]')).not.toBeNull()
     })
   })
+
+  describe('recent vaults', () => {
+    it('does not render the section when no recents are provided', () => {
+      render(<WelcomeScreen {...defaultProps} />)
+      expect(screen.queryByTestId('welcome-recents')).not.toBeInTheDocument()
+    })
+
+    it('does not render the section when onSelectRecent is missing', () => {
+      render(
+        <WelcomeScreen
+          {...defaultProps}
+          recentVaults={[{ label: 'Work', path: '/users/me/Work' }]}
+        />,
+      )
+      expect(screen.queryByTestId('welcome-recents')).not.toBeInTheDocument()
+    })
+
+    it('renders one row per recent vault and selects it on click', () => {
+      const onSelectRecent = vi.fn()
+      render(
+        <WelcomeScreen
+          {...defaultProps}
+          recentVaults={[
+            { label: 'Work', path: '/users/me/Work' },
+            { label: 'Personal', path: '/users/me/Personal' },
+          ]}
+          onSelectRecent={onSelectRecent}
+        />,
+      )
+
+      expect(screen.getByTestId('welcome-recents')).toBeInTheDocument()
+      expect(screen.getByText('Recent vaults')).toBeInTheDocument()
+      expect(screen.getByText('Work')).toBeInTheDocument()
+      expect(screen.getByText('Personal')).toBeInTheDocument()
+
+      fireEvent.click(screen.getByTestId('welcome-recent-/users/me/Work'))
+      expect(onSelectRecent).toHaveBeenCalledWith('/users/me/Work')
+    })
+
+    it('caps the recent list at 10 entries', () => {
+      const recents = Array.from({ length: 15 }, (_, idx) => ({
+        label: `Vault ${idx}`,
+        path: `/path/${idx}`,
+      }))
+      render(
+        <WelcomeScreen
+          {...defaultProps}
+          recentVaults={recents}
+          onSelectRecent={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByTestId('welcome-recent-/path/0')).toBeInTheDocument()
+      expect(screen.getByTestId('welcome-recent-/path/9')).toBeInTheDocument()
+      expect(screen.queryByTestId('welcome-recent-/path/10')).not.toBeInTheDocument()
+    })
+  })
 })

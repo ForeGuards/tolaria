@@ -3,7 +3,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { isTauri, mockInvoke } from '../mock-tauri'
 import { formatFolderPickerActionError, pickFolder } from '../utils/vault-dialog'
-import { loadVaultList, saveVaultList } from '../utils/vaultListStore'
+import { loadVaultList, saveVaultList, touchVaultLastOpened } from '../utils/vaultListStore'
 import type { VaultOption } from '../components/StatusBar'
 import { trackEvent } from '../lib/telemetry'
 
@@ -682,6 +682,11 @@ function switchVaultPath({
   setSelectedVaultPath(path)
   setVaultPath(path)
   onSwitchRef.current()
+  if (path) {
+    void touchVaultLastOpened(path).catch(() => {
+      // Best-effort; recents will just miss this update.
+    })
+  }
 }
 
 async function ensureVaultCanBeRegistered(path: string): Promise<void> {

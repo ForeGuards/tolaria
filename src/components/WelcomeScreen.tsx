@@ -5,6 +5,13 @@ import { OnboardingShell } from './OnboardingShell'
 import { Button } from '@/components/ui/button'
 import tolariaIcon from '@/assets/tolaria-icon.svg'
 
+export interface WelcomeRecentVault {
+  label: string
+  path: string
+  lastOpenedAt?: number | null
+  available?: boolean
+}
+
 interface WelcomeScreenProps {
   mode: 'welcome' | 'vault-missing'
   missingPath?: string
@@ -13,6 +20,8 @@ interface WelcomeScreenProps {
   onRetryCreateVault: () => void
   onCreateEmptyVault: () => void
   onOpenFolder: () => void
+  recentVaults?: WelcomeRecentVault[]
+  onSelectRecent?: (path: string) => void
   isOffline: boolean
   creatingAction: 'template' | 'empty' | null
   error: string | null
@@ -187,6 +196,55 @@ const STATUS_STYLE: React.CSSProperties = {
   margin: 0,
 }
 
+const RECENTS_BLOCK_STYLE: React.CSSProperties = {
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 6,
+}
+
+const RECENTS_HEADER_STYLE: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--muted-foreground)',
+  margin: 0,
+  paddingBottom: 4,
+}
+
+const RECENT_ROW_STYLE: React.CSSProperties = {
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  gap: 2,
+  padding: '8px 12px',
+  borderRadius: 6,
+  border: '1px solid var(--border)',
+  background: 'var(--background)',
+  cursor: 'pointer',
+  textAlign: 'left',
+  transition: 'background 0.12s',
+}
+
+const RECENT_LABEL_STYLE: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 600,
+  color: 'var(--foreground)',
+  margin: 0,
+}
+
+const RECENT_PATH_STYLE: React.CSSProperties = {
+  fontSize: 11,
+  color: 'var(--muted-foreground)',
+  margin: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  maxWidth: '100%',
+}
+
 const ERROR_BLOCK_STYLE: React.CSSProperties = {
   width: '100%',
   display: 'flex',
@@ -264,6 +322,34 @@ function OptionButton({
         <p style={OPTION_DESC_STYLE}>{loading ? (loadingDescription ?? description) : description}</p>
       </div>
     </Button>
+  )
+}
+
+interface RecentVaultRowProps {
+  vault: WelcomeRecentVault
+  disabled: boolean
+  onSelect: (path: string) => void
+}
+
+function RecentVaultRow({ vault, disabled, onSelect }: RecentVaultRowProps) {
+  const [hover, setHover] = useState(false)
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(vault.path)}
+      disabled={disabled}
+      data-testid={`welcome-recent-${vault.path}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        ...RECENT_ROW_STYLE,
+        background: hover ? 'var(--sidebar)' : 'var(--background)',
+        opacity: disabled ? 0.6 : 1,
+      }}
+    >
+      <span style={RECENT_LABEL_STYLE}>{vault.label}</span>
+      <span style={RECENT_PATH_STYLE} title={vault.path}>{vault.path}</span>
+    </button>
   )
 }
 
@@ -375,12 +461,15 @@ export function WelcomeScreen({
   onRetryCreateVault,
   onCreateEmptyVault,
   onOpenFolder,
+  recentVaults,
+  onSelectRecent,
   isOffline,
   creatingAction,
   error,
   canRetryTemplate,
 }: WelcomeScreenProps) {
   const busy = creatingAction !== null
+  const showRecents = !!onSelectRecent && (recentVaults?.length ?? 0) > 0
   const presentation = getWelcomeScreenPresentation(mode, defaultVaultPath, isOffline)
   const { templateActionRef, createEmptyActionRef, openFolderActionRef } = useWelcomeActionButtons({
     mode,
@@ -415,6 +504,20 @@ export function WelcomeScreen({
         </div>
 
         <div style={DIVIDER_STYLE} />
+
+        {showRecents && (
+          <div style={RECENTS_BLOCK_STYLE} data-testid="welcome-recents">
+            <p style={RECENTS_HEADER_STYLE}>Recent vaults</p>
+            {(recentVaults ?? []).slice(0, 10).map((vault) => (
+              <RecentVaultRow
+                key={vault.path}
+                vault={vault}
+                disabled={busy}
+                onSelect={onSelectRecent!}
+              />
+            ))}
+          </div>
+        )}
 
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <OptionButton

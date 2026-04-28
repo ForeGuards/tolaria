@@ -9,6 +9,12 @@ const LEGACY_APP_CONFIG_DIR: &str = "com.laputa.app";
 pub struct VaultEntry {
     pub label: String,
     pub path: String,
+    /// Unix timestamp in milliseconds of the last time this vault was opened
+    /// or made active. Missing for entries written by older app versions; use
+    /// 0 as the implicit fallback in that case so they sort to the bottom of
+    /// recents.
+    #[serde(default)]
+    pub last_opened_at: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -74,6 +80,38 @@ pub fn save_vault_list(list: &VaultList) -> Result<(), String> {
     save_at(&preferred_app_config_path("vaults.json")?, list)
 }
 
+fn current_unix_millis() -> u64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+/// Update `last_opened_at` for the entry whose path matches. Adds the entry
+/// (with the path's basename as a fallback label) when it isn't yet in the
+/// list, so freshly-opened-and-not-yet-registered vaults still appear in
+/// recents.
+pub fn touch_vault_last_opened(path: &str) -> Result<(), String> {
+    let mut list = load_vault_list().unwrap_or_default();
+    let now = current_unix_millis();
+    if let Some(entry) = list.vaults.iter_mut().find(|entry| entry.path == path) {
+        entry.last_opened_at = Some(now);
+    } else {
+        let label = std::path::Path::new(path)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| path.to_string());
+        list.vaults.push(VaultEntry {
+            label,
+            path: path.to_string(),
+            last_opened_at: Some(now),
+        });
+    }
+    save_vault_list(&list)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -99,10 +137,12 @@ mod tests {
                 VaultEntry {
                     label: "My Vault".to_string(),
                     path: "/Users/luca/Laputa".to_string(),
+                    last_opened_at: Some(1_700_000_000_000),
                 },
                 VaultEntry {
                     label: "Work".to_string(),
                     path: "/Users/luca/Work".to_string(),
+                    last_opened_at: None,
                 },
             ],
             active_vault: Some("/Users/luca/Laputa".to_string()),
@@ -112,7 +152,9 @@ mod tests {
         assert_eq!(loaded.vaults.len(), 2);
         assert_eq!(loaded.vaults[0].label, "My Vault");
         assert_eq!(loaded.vaults[0].path, "/Users/luca/Laputa");
+        assert_eq!(loaded.vaults[0].last_opened_at, Some(1_700_000_000_000));
         assert_eq!(loaded.vaults[1].label, "Work");
+        assert_eq!(loaded.vaults[1].last_opened_at, None);
         assert_eq!(loaded.active_vault.as_deref(), Some("/Users/luca/Laputa"));
     }
 
@@ -142,6 +184,7 @@ mod tests {
             vaults: vec![VaultEntry {
                 label: "Test".to_string(),
                 path: "/tmp/test".to_string(),
+                last_opened_at: None,
             }],
             active_vault: None,
             hidden_defaults: vec![],
@@ -204,5 +247,21 @@ mod tests {
         fs::write(&path, r#"{"vaults":[],"active_vault":null}"#).unwrap();
         let loaded = load_at(&path).unwrap();
         assert!(loaded.hidden_defaults.is_empty());
+    }
+
+    #[test]
+    fn load_legacy_format_without_last_opened_at() {
+        // Older app versions persisted entries without the `last_opened_at`
+        // field. They must continue to load and treat the value as None.
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("legacy.json");
+        fs::write(
+            &path,
+            r#"{"vaults":[{"label":"Old","path":"/tmp/old"}],"active_vault":null}"#,
+        )
+        .unwrap();
+        let loaded = load_at(&path).unwrap();
+        assert_eq!(loaded.vaults.len(), 1);
+        assert_eq!(loaded.vaults[0].last_opened_at, None);
     }
 }

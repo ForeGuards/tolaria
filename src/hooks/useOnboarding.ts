@@ -262,6 +262,28 @@ function useOpenFolderHandler(
   }, [options])
 }
 
+function useSelectRecentHandler(
+  options: ReadyVaultHandlerOptions,
+) {
+  return useCallback(async (path: string) => {
+    if (!path) return
+
+    options.setError(null)
+    try {
+      await registerVaultSelection(options.registerVault, path)
+    } catch (err) {
+      options.setError(formatOnboardingRegistrationError({
+        action: 'Could not open vault',
+        err,
+      }))
+      return
+    }
+
+    markVaultReady(options.setState, path)
+    options.onVaultReady?.(path, 'existing')
+  }, [options])
+}
+
 export function useOnboarding(
   initialVaultPath: string,
   options: OnboardingOptions = {},
@@ -341,6 +363,13 @@ export function useOnboarding(
     setState,
   })
 
+  const handleSelectRecent = useSelectRecentHandler({
+    onVaultReady: options.onVaultReady,
+    registerVault: options.registerVault,
+    setError,
+    setState,
+  })
+
   const handleDismiss = useCallback(() => {
     markDismissed()
     setState({ status: 'ready', vaultPath: initialVaultPath })
@@ -358,6 +387,7 @@ export function useOnboarding(
     retryCreateVault,
     handleCreateEmptyVault,
     handleOpenFolder,
+    handleSelectRecent,
     handleDismiss,
   }
 }

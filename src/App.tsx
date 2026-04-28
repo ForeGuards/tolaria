@@ -12,7 +12,7 @@ import { SearchPanel } from './components/SearchPanel'
 import { Toast } from './components/Toast'
 import { CommitDialog } from './components/CommitDialog'
 import { PulseView } from './components/PulseView'
-import { StatusBar } from './components/StatusBar'
+import { StatusBar, type VaultOption } from './components/StatusBar'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CloneVaultModal } from './components/CloneVaultModal'
 import { WelcomeScreen } from './components/WelcomeScreen'
@@ -1495,7 +1495,13 @@ function App() {
     const welcomeOnboarding = shouldResumeFreshStartOnboarding
       ? { ...onboarding, state: { status: 'welcome' as const, defaultPath: vaultSwitcher.vaultPath } }
       : onboarding
-    return <WelcomeView onboarding={welcomeOnboarding} isOffline={networkStatus.isOffline} />
+    return (
+      <WelcomeView
+        onboarding={welcomeOnboarding}
+        isOffline={networkStatus.isOffline}
+        recentVaults={vaultSwitcher.allVaults}
+      />
+    )
   }
 
   if (
@@ -1694,8 +1700,20 @@ function App() {
 type OnboardingState = ReturnType<typeof useOnboarding>
 
 /** Welcome screen view - extracted from main App component */
-function WelcomeView({ onboarding, isOffline }: { onboarding: OnboardingState; isOffline: boolean }) {
+function WelcomeView({
+  onboarding,
+  isOffline,
+  recentVaults,
+}: {
+  onboarding: OnboardingState
+  isOffline: boolean
+  recentVaults: VaultOption[]
+}) {
   const state = onboarding.state as { status: 'welcome' | 'vault-missing'; defaultPath: string; vaultPath?: string }
+  const sortedRecents = [...recentVaults]
+    .filter((vault) => Boolean(vault.path))
+    .sort((a, b) => (b.lastOpenedAt ?? 0) - (a.lastOpenedAt ?? 0))
+    .slice(0, 10)
   return (
     <div className="app-shell">
       <WelcomeScreen
@@ -1706,6 +1724,8 @@ function WelcomeView({ onboarding, isOffline }: { onboarding: OnboardingState; i
         onRetryCreateVault={onboarding.retryCreateVault}
         onCreateEmptyVault={onboarding.handleCreateEmptyVault}
         onOpenFolder={onboarding.handleOpenFolder}
+        recentVaults={sortedRecents}
+        onSelectRecent={onboarding.handleSelectRecent}
         isOffline={isOffline}
         creatingAction={onboarding.creatingAction}
         error={onboarding.error}
