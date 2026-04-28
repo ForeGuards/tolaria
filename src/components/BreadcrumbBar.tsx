@@ -20,8 +20,8 @@ import {
   Star,
   CheckCircle,
   ArrowsClockwise,
-  TextAlignCenter,
-  TextAlignLeft,
+  ArrowsInLineHorizontal,
+  ArrowsOutLineHorizontal,
 } from '@phosphor-icons/react'
 import { NoteTitleIcon } from './NoteTitleIcon'
 import { slugify } from '../hooks/useNoteCreation'
@@ -276,8 +276,8 @@ function NoteWidthAction({
       className={cn(isWide ? 'text-foreground' : 'hover:text-foreground')}
     >
       {isWide
-        ? <TextAlignLeft size={16} className={BREADCRUMB_ICON_CLASS} />
-        : <TextAlignCenter size={16} className={BREADCRUMB_ICON_CLASS} />}
+        ? <ArrowsOutLineHorizontal size={16} className={BREADCRUMB_ICON_CLASS} />
+        : <ArrowsInLineHorizontal size={16} className={BREADCRUMB_ICON_CLASS} />}
     </IconActionButton>
   )
 }
