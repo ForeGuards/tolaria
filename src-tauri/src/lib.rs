@@ -7,6 +7,7 @@ pub mod git;
 pub mod mcp;
 #[cfg(desktop)]
 pub mod menu;
+pub mod ollama;
 pub mod search;
 pub mod settings;
 pub mod telemetry;
@@ -355,7 +356,14 @@ macro_rules! app_invoke_handler {
             commands::reinit_telemetry,
             commands::list_views,
             commands::save_view_cmd,
-            commands::delete_view_cmd
+            commands::delete_view_cmd,
+            commands::check_ollama_status,
+            commands::list_ollama_models,
+            commands::get_ollama_loaded_models,
+            commands::delete_ollama_model,
+            commands::set_ollama_warm_models,
+            commands::pull_ollama_model,
+            commands::stream_ai_completion,
         ]
     };
 }

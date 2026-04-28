@@ -22,6 +22,10 @@ pub struct Settings {
     pub initial_h1_auto_rename_enabled: Option<bool>,
     pub default_ai_agent: Option<String>,
     pub note_width_mode: Option<String>,
+    pub ollama_base_url: Option<String>,
+    pub ollama_active_model: Option<String>,
+    #[serde(default)]
+    pub ollama_warm_models: Vec<String>,
 }
 
 fn normalize_optional_string(value: Option<String>) -> Option<String> {
@@ -51,9 +55,27 @@ pub fn effective_release_channel(value: Option<&str>) -> &'static str {
 
 pub fn normalize_default_ai_agent(value: Option<&str>) -> Option<String> {
     match value.map(|candidate| candidate.trim().to_ascii_lowercase()) {
-        Some(agent) if agent == "claude_code" || agent == "codex" => Some(agent),
+        Some(agent) if agent == "claude_code" || agent == "codex" || agent == "ollama" => Some(agent),
         _ => None,
     }
+}
+
+fn normalize_warm_models(values: Vec<String>) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
+    values
+        .into_iter()
+        .filter_map(|raw| {
+            let trimmed = raw.trim().to_string();
+            if trimmed.is_empty() {
+                return None;
+            }
+            if seen.insert(trimmed.clone()) {
+                Some(trimmed)
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
 pub fn normalize_theme_mode(value: Option<&str>) -> Option<String> {
@@ -119,6 +141,9 @@ fn normalize_settings(settings: Settings) -> Settings {
         initial_h1_auto_rename_enabled: settings.initial_h1_auto_rename_enabled,
         default_ai_agent: normalize_default_ai_agent(settings.default_ai_agent.as_deref()),
         note_width_mode: normalize_note_width_mode(settings.note_width_mode.as_deref()),
+        ollama_base_url: normalize_optional_string(settings.ollama_base_url),
+        ollama_active_model: normalize_optional_string(settings.ollama_active_model),
+        ollama_warm_models: normalize_warm_models(settings.ollama_warm_models),
     }
 }
 
@@ -262,6 +287,9 @@ mod tests {
             initial_h1_auto_rename_enabled: Some(false),
             default_ai_agent: Some("codex".to_string()),
             note_width_mode: Some("wide".to_string()),
+            ollama_base_url: None,
+            ollama_active_model: None,
+            ollama_warm_models: vec![],
         };
         let json = serde_json::to_string(&settings).unwrap();
         let parsed: Settings = serde_json::from_str(&json).unwrap();

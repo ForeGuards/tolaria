@@ -98,6 +98,9 @@ export interface Settings {
   initial_h1_auto_rename_enabled?: boolean | null
   default_ai_agent?: AiAgentId | null
   note_width_mode?: NoteWidthMode | null
+  ollama_base_url?: string | null
+  ollama_active_model?: string | null
+  ollama_warm_models?: string[]
 }
 
 export interface GitPullResult {

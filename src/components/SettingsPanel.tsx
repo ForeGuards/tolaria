@@ -33,6 +33,7 @@ import {
 } from '../lib/themeMode'
 import { normalizeReleaseChannel, serializeReleaseChannel, type ReleaseChannel } from '../lib/releaseChannel'
 import { trackEvent } from '../lib/telemetry'
+import { OllamaSettingsLauncher } from './ollama/OllamaSettingsLauncher'
 import { Button } from './ui/button'
 import { Checkbox, type CheckedState } from './ui/checkbox'
 import { Input } from './ui/input'
@@ -767,6 +768,8 @@ function AiAgentSettingsSection({
       <div style={{ fontSize: 11, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
         {renderDefaultAiAgentSummary(defaultAiAgent, aiAgentsStatus, t)}
       </div>
+
+      <OllamaSettingsLauncher visible={defaultAiAgent === 'ollama'} />
     </>
   )
 }

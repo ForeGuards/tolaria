@@ -10,6 +10,7 @@ describe('aiAgents helpers', () => {
   it('normalizes stored agent ids', () => {
     expect(normalizeStoredAiAgent('claude_code')).toBe('claude_code')
     expect(normalizeStoredAiAgent('codex')).toBe('codex')
+    expect(normalizeStoredAiAgent('ollama')).toBe('ollama')
     expect(normalizeStoredAiAgent('cursor')).toBeNull()
   })
 
@@ -30,6 +31,7 @@ describe('aiAgents helpers', () => {
 
   it('cycles between the supported agents', () => {
     expect(getNextAiAgentId('claude_code')).toBe('codex')
-    expect(getNextAiAgentId('codex')).toBe('claude_code')
+    expect(getNextAiAgentId('codex')).toBe('ollama')
+    expect(getNextAiAgentId('ollama')).toBe('claude_code')
   })
 })

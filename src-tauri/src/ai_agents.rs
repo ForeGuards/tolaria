@@ -8,6 +8,7 @@ use std::process::{Command, Stdio};
 pub enum AiAgentId {
     ClaudeCode,
     Codex,
+    Ollama,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -20,6 +21,7 @@ pub struct AiAgentAvailability {
 pub struct AiAgentsStatus {
     pub claude_code: AiAgentAvailability,
     pub codex: AiAgentAvailability,
+    pub ollama: AiAgentAvailability,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -57,12 +59,56 @@ pub struct AiAgentStreamRequest {
     pub message: String,
     pub system_prompt: Option<String>,
     pub vault_path: String,
+    /// Used only when agent == Ollama: the Ollama model to chat with.
+    #[serde(default)]
+    pub model: Option<String>,
+    /// Used only when agent == Ollama: override of the daemon URL.
+    #[serde(default)]
+    pub ollama_base_url: Option<String>,
 }
 
 pub fn get_ai_agents_status() -> AiAgentsStatus {
     AiAgentsStatus {
         claude_code: availability_from_claude(),
         codex: availability_from_codex(),
+        ollama: availability_from_ollama(),
+    }
+}
+
+fn availability_from_ollama() -> AiAgentAvailability {
+    // Cheap probe: try the configured base URL with a short timeout. We do it
+    // synchronously via a blocking reqwest client so this stays compatible with
+    // the existing get_ai_agents_status() signature.
+    let base_url = std::env::var("OLLAMA_BASE_URL")
+        .unwrap_or_else(|_| "http://localhost:11434".to_string());
+    let url = format!("{base_url}/api/version");
+    let client = match reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_millis(800))
+        .build()
+    {
+        Ok(c) => c,
+        Err(_) => {
+            return AiAgentAvailability {
+                installed: false,
+                version: None,
+            }
+        }
+    };
+    match client.get(&url).send() {
+        Ok(resp) if resp.status().is_success() => {
+            let version = resp
+                .json::<serde_json::Value>()
+                .ok()
+                .and_then(|v| v.get("version").and_then(|s| s.as_str()).map(str::to_string));
+            AiAgentAvailability {
+                installed: true,
+                version,
+            }
+        }
+        _ => AiAgentAvailability {
+            installed: false,
+            version: None,
+        },
     }
 }
 
@@ -84,7 +130,49 @@ where
             })
         }
         AiAgentId::Codex => run_codex_agent_stream(request, emit),
+        AiAgentId::Ollama => run_ollama_agent_stream(request, emit),
     }
+}
+
+fn run_ollama_agent_stream<F>(request: AiAgentStreamRequest, mut emit: F) -> Result<String, String>
+where
+    F: FnMut(AiAgentStreamEvent),
+{
+    use futures_util::StreamExt;
+
+    let model = request.model.clone().ok_or_else(|| {
+        "No active Ollama model configured. Open Settings → AI Agent → Ollama to pick one.".to_string()
+    })?;
+    let system = request.system_prompt.clone().unwrap_or_default();
+    let prompt = request.message.clone();
+
+    let client = crate::ollama::client::OllamaClient::new(request.ollama_base_url.clone());
+    let session_id = uuid::Uuid::new_v4().to_string();
+    emit(AiAgentStreamEvent::Init {
+        session_id: session_id.clone(),
+    });
+
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|e| format!("Failed to start tokio runtime: {e}"))?;
+
+    runtime.block_on(async move {
+        let mut stream = Box::pin(client.generate_stream(&model, &system, &prompt, None));
+        while let Some(item) = stream.next().await {
+            match item {
+                Ok(delta) => emit(AiAgentStreamEvent::TextDelta { text: delta }),
+                Err(err) => {
+                    emit(AiAgentStreamEvent::Error {
+                        message: err.clone(),
+                    });
+                    return Err(err);
+                }
+            }
+        }
+        emit(AiAgentStreamEvent::Done);
+        Ok(session_id)
+    })
 }
 
 fn availability_from_claude() -> AiAgentAvailability {
@@ -452,6 +540,8 @@ mod tests {
             message: "Rename the note".into(),
             system_prompt: Some("Be concise".into()),
             vault_path: "/tmp/vault".into(),
+            model: None,
+            ollama_base_url: None,
         });
 
         assert!(prompt.starts_with("System instructions:\nBe concise"));
@@ -465,6 +555,8 @@ mod tests {
             message: "Rename the note".into(),
             system_prompt: None,
             vault_path: "/tmp/vault".into(),
+            model: None,
+            ollama_base_url: None,
         }) {
             assert!(!args.contains(&"--dangerously-bypass-approvals-and-sandbox".to_string()));
             assert!(args.contains(&"--json".to_string()));

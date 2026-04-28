@@ -386,6 +386,7 @@ export const mockHandlers: Record<string, (args: any) => any> = {
   get_ai_agents_status: () => ({
     claude_code: { installed: false, version: null },
     codex: { installed: false, version: null },
+    ollama: { installed: false, version: null },
   }),
   get_vault_ai_guidance_status: () => ({ ...mockVaultAiGuidanceStatus }),
   restore_vault_ai_guidance: () => {
@@ -399,6 +400,29 @@ export const mockHandlers: Record<string, (args: any) => any> = {
   stream_claude_chat: () => 'mock-session',
   stream_claude_agent: () => null,
   stream_ai_agent: () => null,
+  check_ollama_status: () => ({
+    installed: false,
+    base_url: 'http://localhost:11434',
+    version: null,
+    error: 'Mock environment — Ollama is not reachable.',
+  }),
+  list_ollama_models: () => [] as Array<{
+    name: string
+    size: number
+    parameter_size: string | null
+    quantization: string | null
+    family: string | null
+    modified_at: string
+  }>,
+  get_ollama_loaded_models: () => [] as Array<{
+    name: string
+    size_vram: number
+    expires_at: string | null
+  }>,
+  delete_ollama_model: () => null,
+  set_ollama_warm_models: () => null,
+  pull_ollama_model: () => null,
+  stream_ai_completion: () => null,
   save_note_content: (args: { path: string; content: string }) => {
     MOCK_CONTENT[args.path] = args.content
     mockSavedSinceCommit.add(args.path)

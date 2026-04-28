@@ -1,4 +1,4 @@
-export type AiAgentId = 'claude_code' | 'codex'
+export type AiAgentId = 'claude_code' | 'codex' | 'ollama'
 
 export type AiAgentStatus = 'checking' | 'installed' | 'missing'
 
@@ -10,6 +10,7 @@ export interface AiAgentAvailability {
 export interface AiAgentsStatus {
   claude_code: AiAgentAvailability
   codex: AiAgentAvailability
+  ollama: AiAgentAvailability
 }
 
 export interface AiAgentDefinition {
@@ -34,6 +35,12 @@ export const AI_AGENT_DEFINITIONS: readonly AiAgentDefinition[] = [
     shortLabel: 'Codex',
     installUrl: 'https://developers.openai.com/codex/cli',
   },
+  {
+    id: 'ollama',
+    label: 'Ollama (local)',
+    shortLabel: 'Ollama',
+    installUrl: 'https://ollama.com',
+  },
 ] as const
 
 export function createAiAgentAvailability(status: AiAgentStatus = 'checking', version: string | null = null): AiAgentAvailability {
@@ -44,6 +51,7 @@ export function createCheckingAiAgentsStatus(): AiAgentsStatus {
   return {
     claude_code: createAiAgentAvailability(),
     codex: createAiAgentAvailability(),
+    ollama: createAiAgentAvailability(),
   }
 }
 
@@ -51,11 +59,12 @@ export function createMissingAiAgentsStatus(): AiAgentsStatus {
   return {
     claude_code: createAiAgentAvailability('missing'),
     codex: createAiAgentAvailability('missing'),
+    ollama: createAiAgentAvailability('missing'),
   }
 }
 
 export function normalizeStoredAiAgent(value: string | null | undefined): AiAgentId | null {
-  if (value === 'claude_code' || value === 'codex') return value
+  if (value === 'claude_code' || value === 'codex' || value === 'ollama') return value
   return null
 }
 
@@ -79,6 +88,7 @@ export function normalizeAiAgentsStatus(payload: Partial<Record<AiAgentId, { ins
   return {
     claude_code: normalizeAvailability(payload?.claude_code),
     codex: normalizeAvailability(payload?.codex),
+    ollama: normalizeAvailability(payload?.ollama),
   }
 }
 
