@@ -204,10 +204,21 @@
   width: 100%;
 }
 
+/* Wide mode: fill the available area (already bounded by the sidebar +
+ * inspector), with responsive padding so ultrawide monitors keep some
+ * breathing room. The content area is therefore truly dynamic — it
+ * tracks the browser window width minus chrome, with no hard cap. */
 .editor-content-width--wide .editor-content-wrapper {
-  max-width: min(100%, 1280px);
-  padding-left: clamp(24px, 4vw, 72px);
-  padding-right: clamp(24px, 4vw, 72px);
+  max-width: 100%;
+  padding-left: clamp(24px, 5vw, 120px);
+  padding-right: clamp(24px, 5vw, 120px);
+}
+
+/* Wide mode also overrides the inner BlockNote container's max-width so
+ * it does not re-introduce the cap if the --editor-max-width custom
+ * property is ever wired up by a theme. */
+.editor-content-width--wide .editor__blocknote-container .bn-editor {
+  max-width: 100%;
 }
 
 .editor-content-wrapper--raw {
