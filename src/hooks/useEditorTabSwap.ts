@@ -645,7 +645,13 @@ function shouldRefreshStableActivePath(options: {
 
   if (!activeTabPath || !activeTab) return false
   const cachedState = cache.get(activeTabPath)
-  return !cachedState || cachedState.sourceContent !== activeTab.content
+  if (!cachedState) return true
+  // Only re-swap when the editor body actually changed. Frontmatter-only
+  // edits (e.g. toggling note width or favorite) update tab.content but
+  // leave the rendered document unchanged, so a re-parse would needlessly
+  // wipe cursor/selection state and risk visual flicker.
+  return normalizeTabBody({ content: cachedState.sourceContent })
+    !== normalizeTabBody({ content: activeTab.content })
 }
 
 function cacheStableActivePath(options: {

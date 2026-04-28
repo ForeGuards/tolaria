@@ -476,6 +476,28 @@ describe('useEditorTabSwap raw mode sync', () => {
     expect(mockEditor.replaceBlocks).toHaveBeenCalled()
   })
 
+  it('does not re-parse the editor when only frontmatter changes (e.g. width toggle)', async () => {
+    const tabA = makeTab('a.md', 'Note A')
+    const tabAWithWidth = {
+      ...tabA,
+      content: `---\ntitle: Note A\n_width: wide\n---\n\n# Note A\n\nBody of Note A.`,
+    }
+
+    const { mockEditor, rerenderWith } = await createSwapHarness({
+      initialProps: { tabs: [tabA], activeTabPath: 'a.md', rawMode: false },
+    })
+
+    mockEditor.tryParseMarkdownToBlocks.mockClear()
+    mockEditor.replaceBlocks.mockClear()
+    mockEditor._tiptapEditor.commands.setContent.mockClear()
+
+    await rerenderWith({ tabs: [tabAWithWidth], activeTabPath: 'a.md' })
+
+    expect(mockEditor.tryParseMarkdownToBlocks).not.toHaveBeenCalled()
+    expect(mockEditor.replaceBlocks).not.toHaveBeenCalled()
+    expect(mockEditor._tiptapEditor.commands.setContent).not.toHaveBeenCalled()
+  })
+
   it('ignores editor change events before the pending tab swap applies a new untitled note', async () => {
     vi.spyOn(document, 'querySelector').mockReturnValue({ scrollTop: 0 } as unknown as Element)
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => { cb(0); return 0 })
